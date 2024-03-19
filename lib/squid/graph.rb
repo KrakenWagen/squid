@@ -69,7 +69,7 @@ module Squid
       args[:labels] = items_of labels, skip_first_if: second_axis
       args[:formats] = items_of formats, skip_first_if: second_axis
       points = Point.for axis.data, **args
-      options = {colors: colors, starting_at: (second_axis ? 1: 0)}
+      options = {colors: colors, starting_at: (second_axis ? @data.size - 1 : 0)}
       case (second_axis ? :column : type)
         when :point then @plot.points points, options
         when :line, :two_axis then @plot.lines points, options.merge(line_widths: line_widths)
@@ -80,18 +80,18 @@ module Squid
 
     def items_of(array, skip_first_if:)
       if skip_first_if
-        array.empty? ? [] : array[1..-1]
+        array.empty? ? [] : array[-1..-1]
       else
         array
       end
     end
 
     def left
-      @left ||= axis first: 0, last: (two_axis? ? 1 : @data.size)
+      @left ||= axis first: 0, last: (two_axis? ? @data.size - 1 : @data.size)
     end
 
     def right
-      @right ||= axis first: 1, last: (two_axis? ? @data.size : 0)
+      @right ||= axis first: @data.size - 1, last: (two_axis? ? @data.size : 0)
     end
 
     def axis(first:, last:)
