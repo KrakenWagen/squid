@@ -75,6 +75,8 @@ module Squid
 
     def points(series, options = {})
       items(series, **options) do |point, w, i, padding|
+        next if point.y.nil?
+
         x, y = (point.index + 0.5)*w + left, point.y + @bottom
         @pdf.fill_circle [x, y], 5
       end
@@ -85,16 +87,18 @@ module Squid
       line_widths = options.delete(:line_widths) { [] }
       items(series, **options) do |point, w, i, padding|
         prev_x, prev_y = x, y
-        x, y = (point.index + 0.5)*w + left, point.y + @bottom
+        x, y = (point.index + 0.5)*w + left, point.y.nil? ? nil : point.y + @bottom
         line_width = line_widths.fetch i, 3
         with line_width: line_width, cap_style: :round do
-          @pdf.line [prev_x, prev_y], [x,y] unless point.index.zero? || prev_y.nil? || prev_x > x
+          @pdf.line [prev_x, prev_y], [x,y] unless point.index.zero? || prev_y.nil? || y.nil? || prev_x > x
         end
       end
     end
 
     def stacks(series, options = {})
       items(series, **options.merge(fill: true)) do |point, w, i, padding|
+        next if point.y.nil?
+
         x, y = point.index*w + padding + left, point.y + @bottom
         @pdf.fill_rectangle [x, y], w - 2*padding, point.height
       end
@@ -102,6 +106,8 @@ module Squid
 
     def columns(series, options = {})
       items(series, **options.merge(fill: true, count: series.size)) do |point, w, i, padding|
+        next if point.y.nil?
+        
         item_w = (w - 2 * padding)/ series.size
         x, y = point.index*w + padding + left + i*item_w, point.y + @bottom
         @pdf.fill_rectangle [x, y], item_w, point.height
@@ -142,7 +148,7 @@ module Squid
         w = width / points.size.to_f
         series_color = colors.fetch color_index, series_colors(color_index)
         item_color = Array.wrap(series_color).cycle
-        points.select(&:y).each do |point|
+        points.each do |point|
           item point, item_color.next, w, fill, index, count, &block
         end
       end
